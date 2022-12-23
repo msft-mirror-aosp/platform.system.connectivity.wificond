@@ -57,20 +57,6 @@ bool IsScanTypeSupported(int scan_type, const WiphyFeatures& wiphy_features) {
   return {};
 }
 
-int convertStdErrNumToScanStatus(int errNum) {
-    switch(errNum) {
-    case EINVAL:
-      return IWifiScannerImpl::SCAN_STATUS_FAILED_INVALID_ARGS;
-    case EBUSY:
-      return IWifiScannerImpl::SCAN_STATUS_FAILED_BUSY;
-    case ENODEV:
-      return IWifiScannerImpl::SCAN_STATUS_FAILED_NODEV;
-    default:
-      return IWifiScannerImpl::SCAN_STATUS_FAILED_GENERIC;
-  }
-  return {};
-}
-
 constexpr const int kPercentNetworksWithFreq = 30;
 constexpr const int32_t kPnoScanDefaultFreqs2G[] = {2412, 2417, 2422, 2427, 2432, 2437, 2447, 2452,
     2457, 2462};
@@ -157,10 +143,10 @@ Status ScannerImpl::getMaxSsidsPerScan(int32_t* out_max_ssids_per_scan) {
   return Status::ok();
 }
 
-Status ScannerImpl::scanRequest(const SingleScanSettings& scan_settings,
-                         int* status) {
+Status ScannerImpl::scan(const SingleScanSettings& scan_settings,
+                         bool* out_success) {
   if (!CheckIsValid()) {
-    *status = IWifiScannerImpl::SCAN_STATUS_FAILED_GENERIC;
+    *out_success = false;
     return Status::ok();
   }
 
@@ -211,25 +197,12 @@ Status ScannerImpl::scanRequest(const SingleScanSettings& scan_settings,
     }
     CHECK(error_code != ENODEV || nodev_counter_ <= 3)
         << "Driver is in a bad state, restarting wificond";
-    *status = convertStdErrNumToScanStatus(error_code);
+    *out_success = false;
     return Status::ok();
   }
   nodev_counter_ = 0;
   scan_started_ = true;
-  *status = IWifiScannerImpl::SCAN_STATUS_SUCCESS;
-  return Status::ok();
-
-}
-Status ScannerImpl::scan(const SingleScanSettings& scan_settings,
-                         bool* out_success) {
-
-  int status = 0;
-  scanRequest(scan_settings, &status);
-  if (status == IWifiScannerImpl::SCAN_STATUS_SUCCESS) {
-    *out_success = true;
-  } else {
-    *out_success = false;
-  }
+  *out_success = true;
   return Status::ok();
 }
 
@@ -464,7 +437,7 @@ void ScannerImpl::OnScanResultsReady(uint32_t interface_index, bool aborted,
     // TODO: Pass other parameters back once we find framework needs them.
     if (aborted) {
       LOG(WARNING) << "Scan aborted";
-      scan_event_handler_->OnScanRequestFailed(IWifiScannerImpl::SCAN_STATUS_FAILED_ABORT);
+      scan_event_handler_->OnScanFailed();
     } else {
       scan_event_handler_->OnScanResultReady();
     }
