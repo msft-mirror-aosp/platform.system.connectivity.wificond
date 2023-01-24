@@ -51,6 +51,8 @@ namespace {
 
 constexpr uint32_t kFakeInterfaceIndex = 12;
 constexpr uint32_t kFakeScanIntervalMs = 10000;
+constexpr uint32_t kFastScanIterations = 3;
+constexpr uint32_t kSlowScanIntervalMultiplier = 3;
 vector<uint32_t> kDefaultFrequencies = {2412, 2417, 2422, 2427, 2432, 2437, 2447, 2452, 2457,
                                         2462, 5180, 5200, 5220, 5240, 5745, 5765, 5785, 5805};
 
@@ -346,8 +348,8 @@ TEST_F(ScannerTest, TestGenerateScanPlansIfDeviceSupports) {
       0 /* max_match_sets */,
       // Parameters above are not related to this test.
       2 /* 1 plan for finite repeated scan and 1 plan for ininfite scan loop */,
-      kFakeScanIntervalMs * PnoSettings::kSlowScanIntervalMultiplier / 1000,
-      PnoSettings::kFastScanIterations);
+      kFakeScanIntervalMs * kSlowScanIntervalMultiplier / 1000,
+      kFastScanIterations);
   ScannerImpl scanner(
       kFakeInterfaceIndex,
       scan_capabilities_scan_plan_supported, wiphy_features_,
@@ -356,6 +358,8 @@ TEST_F(ScannerTest, TestGenerateScanPlansIfDeviceSupports) {
 
   PnoSettings pno_settings;
   pno_settings.interval_ms_ = kFakeScanIntervalMs;
+  pno_settings.scan_iterations_ = kFastScanIterations;
+  pno_settings.scan_interval_multiplier_ = kSlowScanIntervalMultiplier;
 
   SchedScanIntervalSetting interval_setting;
   EXPECT_CALL(
@@ -369,7 +373,7 @@ TEST_F(ScannerTest, TestGenerateScanPlansIfDeviceSupports) {
   EXPECT_TRUE(scanner.startPnoScan(pno_settings, &success_ignored).isOk());
   /* 1 plan for finite repeated scan */
   EXPECT_EQ(1U, interval_setting.plans.size());
-  EXPECT_EQ(kFakeScanIntervalMs * PnoSettings::kSlowScanIntervalMultiplier,
+  EXPECT_EQ(kFakeScanIntervalMs * kSlowScanIntervalMultiplier,
             interval_setting.final_interval_ms);
 }
 
@@ -389,6 +393,8 @@ TEST_F(ScannerTest, TestGenerateSingleIntervalIfDeviceDoesNotSupportScanPlan) {
       &scan_utils_);
   PnoSettings pno_settings;
   pno_settings.interval_ms_ = kFakeScanIntervalMs;
+  pno_settings.scan_iterations_ = kFastScanIterations;
+  pno_settings.scan_interval_multiplier_ = kSlowScanIntervalMultiplier;
 
   SchedScanIntervalSetting interval_setting;
   EXPECT_CALL(
@@ -427,8 +433,8 @@ TEST_F(ScannerTest, TestStartPnoScanWithNonEmptyFrequencyList) {
       1 /* max_num_sched_scan_ssids */,
       1 /* max_match_sets */,
       0,
-      kFakeScanIntervalMs * PnoSettings::kSlowScanIntervalMultiplier / 1000,
-      PnoSettings::kFastScanIterations);
+      kFakeScanIntervalMs * kSlowScanIntervalMultiplier / 1000,
+      kFastScanIterations);
   ScannerImpl scanner_impl(kFakeInterfaceIndex, scan_capabilities_test_frequencies,
                            wiphy_features_, &client_interface_impl_,
                            &scan_utils_);
@@ -458,8 +464,8 @@ TEST_F(ScannerTest, TestStartPnoScanWithFrequencyListNoDuplicates) {
       1 /* max_num_sched_scan_ssids */,
       2 /* max_match_sets */,
       0,
-      kFakeScanIntervalMs * PnoSettings::kSlowScanIntervalMultiplier / 1000,
-      PnoSettings::kFastScanIterations);
+      kFakeScanIntervalMs * kSlowScanIntervalMultiplier / 1000,
+      kFastScanIterations);
   ScannerImpl scanner_impl(kFakeInterfaceIndex, scan_capabilities_test_frequencies,
                            wiphy_features_, &client_interface_impl_,
                            &scan_utils_);
@@ -497,8 +503,8 @@ TEST_F(ScannerTest, TestStartPnoScanWithFrequencyListFallbackMechanism) {
       1 /* max_num_sched_scan_ssids */,
       2 /* max_match_sets */,
       0,
-      kFakeScanIntervalMs * PnoSettings::kSlowScanIntervalMultiplier / 1000,
-      PnoSettings::kFastScanIterations);
+      kFakeScanIntervalMs * kSlowScanIntervalMultiplier / 1000,
+      kFastScanIterations);
   ScannerImpl scanner_impl(kFakeInterfaceIndex, scan_capabilities_test_frequencies,
                            wiphy_features_, &client_interface_impl_,
                            &scan_utils_);
@@ -540,8 +546,8 @@ TEST_F(ScannerTest, TestStartPnoScanEmptyList) {
       1 /* max_num_sched_scan_ssids */,
       2 /* max_match_sets */,
       0,
-      kFakeScanIntervalMs * PnoSettings::kSlowScanIntervalMultiplier / 1000,
-      PnoSettings::kFastScanIterations);
+      kFakeScanIntervalMs * kSlowScanIntervalMultiplier / 1000,
+      kFastScanIterations);
   ScannerImpl scanner_impl(kFakeInterfaceIndex, scan_capabilities_test_frequencies,
                            wiphy_features_, &client_interface_impl_,
                            &scan_utils_);
