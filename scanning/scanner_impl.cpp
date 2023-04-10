@@ -204,7 +204,8 @@ Status ScannerImpl::scanRequest(const SingleScanSettings& scan_settings,
 
   int error_code = 0;
   if (!scan_utils_->Scan(interface_index_, request_random_mac, scan_type,
-                         scan_settings.enable_6ghz_rnr_, ssids, freqs, &error_code)) {
+                         scan_settings.enable_6ghz_rnr_, ssids, freqs,
+                         scan_settings.vendor_ies_, &error_code)) {
     if (error_code == ENODEV) {
         nodev_counter_ ++;
         LOG(WARNING) << "Scan failed with error=nodev. counter=" << nodev_counter_;
@@ -498,18 +499,18 @@ SchedScanIntervalSetting ScannerImpl::GenerateIntervalSetting(
   bool support_num_scan_plans = scan_capabilities_.max_num_scan_plans >= 2;
   bool support_scan_plan_interval =
       scan_capabilities_.max_scan_plan_interval * 1000 >=
-          pno_settings.interval_ms_ * PnoSettings::kSlowScanIntervalMultiplier;
+          pno_settings.interval_ms_ * pno_settings.scan_interval_multiplier_;
   bool support_scan_plan_iterations =
       scan_capabilities_.max_scan_plan_iterations >=
-                  PnoSettings::kFastScanIterations;
+                  pno_settings.scan_iterations_;
 
   uint32_t fast_scan_interval =
       static_cast<uint32_t>(pno_settings.interval_ms_);
   if (support_num_scan_plans && support_scan_plan_interval &&
       support_scan_plan_iterations) {
     return SchedScanIntervalSetting{
-        {{fast_scan_interval, PnoSettings::kFastScanIterations}},
-        fast_scan_interval * PnoSettings::kSlowScanIntervalMultiplier};
+        {{fast_scan_interval, pno_settings.scan_iterations_}},
+        fast_scan_interval * pno_settings.scan_interval_multiplier_};
   } else {
     // Device doesn't support the provided scan plans.
     // Specify single interval instead.
