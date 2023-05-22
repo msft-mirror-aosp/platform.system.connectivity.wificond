@@ -64,14 +64,12 @@ cc_binary {
     ],
     init_rc: ["wificond.rc"],
     srcs: [
-	"main.cpp",
-	"wifi_keystore_hal_connector.cpp"
+        "main.cpp",
+        "wifi_keystore_hal_connector.cpp"
     ],
     include_dirs: ["system/security/keystore/include"],
 
     shared_libs: [
-        "android.hardware.net.nlinterceptor-V1-ndk",
-        "android.security.legacykeystore-ndk",
         "libbinder",
         "libbinder_ndk",
         "libbase",
@@ -82,9 +80,11 @@ cc_binary {
         "libssl",
         "libutils",
         "libwifi-system-iface",
-        "android.system.wifi.keystore@1.0",
     ],
     static_libs: [
+        "android.hardware.net.nlinterceptor-V1-ndk",
+        "android.security.legacykeystore-ndk",
+        "android.system.wifi.keystore@1.0",
         "libnlinterceptor",
         "libwificond", // Wificond daemon
         "libwifikeystorehal"  // Wifi Keystore HAL service
