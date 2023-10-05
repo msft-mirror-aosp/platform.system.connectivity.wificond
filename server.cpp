@@ -78,6 +78,10 @@ Status Server::registerWificondEventCallback(const sp<IWificondEventCallback>& c
   LOG(INFO) << "New wificond event callback registered";
   wificond_event_callbacks_.push_back(callback);
 
+  if (current_country_code_.empty() &&
+          !netlink_utils_->GetCountryCode(&current_country_code_)) {
+      LOG(ERROR) << "Fail to get country code";
+  }
   // Inform immediately about current country code
   if (!current_country_code_.empty())
     callback->OnRegDomainChanged(current_country_code_);
